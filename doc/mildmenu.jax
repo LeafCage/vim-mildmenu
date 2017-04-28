@@ -1,0 +1,191 @@
+*mildmenu.txt*	独自のコマンドライン補完を提供する。
+
+Author  : LeafCage <leafcage+vim at gmail.com>
+License : MIT license  {{{
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    "Software"), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}}}
+
+==============================================================================
+目次						*mildmenu-contents*
+
+概要				|mildmenu-introduction|
+使い方				|mildmenu-usage|
+コアインターフェイス		|mildmenu-core-interface|
+  コア変数			  |mildmenu-core-variables|
+  コアキーマッピング		  |mildmenu-core-key-mappings|
+標準mildmenu定義		|mildmenu-standard-define|
+mildmenu定義の作り方		|mildmenu-how-to-make-Define|
+
+
+==============================================================================
+概要						*mildmenu-introduction*
+
+*mildmenu* は独自のコマンドライン補完を定義できます。
+
+最新版:
+https://github.com/LeafCage/mildmenu.vim
+
+
+==============================================================================
+使い方						*mildmenu-usage*
+
+コマンドラインの補完に通常使うキーを|<Plug>(mildmenu-default-expand)|に割り当
+てる。通常そのキーは 'wildchar' で設定されているキー、<Tab>のはずである。 >
+	cmap <Tab> <Plug>(mildmenu-default-expand)
+これでこのキーには通常の補完を展開する機能に加えて、mildmenu の補完を展開でき
+る機能も持つことができるはずである。
+
+次に、使いたい mildmenu 補完を任意のキーに割り当てる。 >
+	cmap <C-x><C-w> <Plug>(mildmenu-winword)
+	cmap <C-x><C-c> <Plug>(mildmenu-camelsnake)
+
+
+==============================================================================
+コアインターフェイス				*mildmenu-core-interface*
+
+------------------------------------------------------------------------------
+コア変数					*mildmenu-core-variables*
+
+g:mildmenu_default_expand			*g:mildmenu_default_expand*
+	既定値: {":": "abbreviate"}
+	キーにコマンドラインの種類を、値に mildmenu定義名を設定する。
+	|<Plug>(mildmenu-default-expand)|が実行されたとき、コマンドラインの種
+	類によって呼ばれる mildmenu を指定する。
+	コマンドラインの種類は|getcmdtype()|で取得できる以下の1文字のうちのい
+	ずれかである。
+	    :	通常のexコマンド
+	    >	デバッグモードコマンド |debug-mode|
+	    /	前方検索コマンド
+	    ?	後方検索コマンド
+	    @	|input()| コマンド
+	    -	|:insert| または |:append| コマンド
+	値に空文字を指定するとそのコマンドラインの種類では mildmenu は無効化さ
+	れる。
+
+
+g:mildmenu_mode					*g:mildmenu_mode*
+	既定値: 未定義
+	定義済みなら、補完方式として、これを 'wildmode' の代わりに使う。文字列
+	で、'wildmode' で有効な書式で定義しなくてはいけない。
+	無効な書式の場合、代わりに 'wildmode' が使われる。
+
+
+------------------------------------------------------------------------------
+コアキーマッピング				*mildmenu-core-key-mappings*
+
+<Plug>(mildmenu-default-expand)		*<Plug>(mildmenu-default-expand)*
+	有効モード: コマンドライン
+	カーソル直前にコマンド短縮名があればそれを展開し、そうでなければ通常の
+	補完を呼び出す。
+	cmap はコマンドラインのため、imap や nmap はコマンドラインウィンドウの
+	ために定義する。
+	通常の補完呼び出しキー|c_<Tab>|などの代わりに使うと良い。
+
+
+==============================================================================
+標準mildmenu定義				*mildmenu-standard-defines*
+
+abbreviate	ユーザ定義コマンドのイニシャルを展開  cmdtype ":" でのみ有効
+
+	<Plug>(mildmenu-abbreviate)		*<Plug>(mildmenu-abbreviate)*
+		有効マップ: コマンドライン
+		アルファベット数文字(大文字小文字を問わない)に|;|か、または|!|
+		や数字といったコマンドに続けて渡せる引数を続けた文字列を対象と
+		する。ユーザ定義コマンドをイニシャルにしたとき、その文字列で始
+		まるコマンドに展開する。
+		例えば|gg;|は "GitGutter" や "GitGutterAll" などに展開できる。
+		また|gg!|は "GitGutter!"、|gg2|は "GitGutter 2" などに展開でき
+		る。ただしこの、後ろに引数を添えた場合の引数は "full" モードの
+		ときのみ添えられ、そうでなければ無視される。
+		前に|_|を付けてからアルファベットを指定すると、イニシャルの前
+		方一致でなく部分一致検索になる。その場合、後ろの|;|などは省略
+		できる。
+
+
+winword		現在タブ内ウィンドウの全バッファから収集したキーワードを補完
+
+	<Plug>(mildmenu-winword)		*<Plug>(mildmenu-winword)*
+		有効モード: コマンドライン
+		現在タブ内の全ウィンドウの全バッファについてキーワード単語を収
+		集して補完する。
+
+
+camelsnake	キャメルケースとスネークケースを相互変換する
+
+	<Plug>(mildmenu-camelsnake)		*<Plug>(mildmenu-camelsnake)*
+		有効モード: コマンドライン
+		カーソル前の単語をキャメルケース、パスカルケース、スネークケ
+		ース化した語に置き換える。
+
+
+==============================================================================
+mildmenu定義の作り方				*mildmenu-how-to-make-Define*
+
+ファイル plugin/mildmenu/{definename}.vim で呼び出しキーマップを定義する。 >
+  cnoremap <expr><Plug>(mildmenu-{definename})  mildmenu#run("{definename}")
+
+ファイル autoload/mildmenu/{definename}.vim にて
+関数 mildmenu#{definename}#get_define() を定義する。これは先ほど定義したキーマ
+ップから呼び出される。
+この関数は辞書 Define を返す。辞書 Define は次のキーを持つ。
+
+
+Define.cmdtype				(文字列)
+	既定値: ":/?@-"
+	|getcmdtype()|で取得できる、コマンドラインの種類を表す文字を望むだけ指
+	定する。
+	指定された種類のコマンドラインでのみ、このmildmenu定義は有効となる。
+
+Define.complete_single_item		(数値)
+	既定値: 1
+	非0 なら、補完候補が一つだけのとき、補完を確定する。
+
+Define.lead_pattern			(文字列)
+	既定値: '\w*$'
+	補完対象となる文字列の開始部分を正規表現で指定する。コマンドラインの先
+	頭からカーソル位置手前までの文字列が、この正規表現でマッチされる。
+	マッチできなければこの mildmenu呼び出しは無効となる。
+	マッチする場合、マッチした文字列は Define.get_items() 関数の引数
+	|{lead}|として渡される。
+	マッチした補完対象文字列は補完の際、補完文字列に置き換えられる。
+	NOTE: 既定ではカーソルより手前の|word|を補完対象としている。
+	NOTE: |\ze|でマッチを途中で切っても、補完対象はカーソル手前までなのは
+	変わらないが、|{lead}|に渡されるのはマッチ文字列のみとなり、|\ze|以降
+	は初めからコマンドラインに入力されていなかったかのように削除される。
+
+Define.use_matchlist_for_lead		(数値)
+	既定値: 0
+	非0 なら Define.lead_pattern が|matchlist()|で評価され、
+	Define.get_items() に渡される{lead}は結果のリストになる。
+
+Define.get_items({lead})
+	文字列のリストか、後述する辞書を返す。これが補完として使われる。
+	{lead}はコマンドラインのカーソル位置手前までを Define.leads_pattern
+	でマッチした結果である。
+	辞書を返す場合、次のキーと値を持つ。
+	    items		(リスト)(必須)
+		補完文字列リスト
+	    appending		(文字列)(任意)
+		"full" モードで補完される際、カーソル後ろにこの文字列を挿入す
+		る。入力に後に添える引数が含まれており、それを補完対象にしたく
+		ないときに使う。
+
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:noet:fen:
